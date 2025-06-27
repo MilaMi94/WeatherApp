@@ -1,0 +1,82 @@
+# ======================
+# PYTHON / DJANGO
+# ======================
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.log
+
+# Virtual environments
+venv/
+.env
+.env.*
+
+# Django-specific
+db.sqlite3
+staticfiles/
+media/
+local_settings.py
+settings_local.py
+
+# Django migrations cache
+**/migrations/__pycache__/
+**/migrations/*.py[cod]
+
+# ======================
+# NODE / VITE (Frontend)
+# ======================
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node modules & build
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+
+# Vite env files
+frontend/.env
+frontend/.env.*
+
+# Editor directories and files
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ======================
+# DOCKER (optional)
+# ======================
+
+# Docker volumes or local db storage
+**/pgdata/
+**/db-data/
+
+# ======================
+# SYSTEM
+# ======================
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Linux temp
+*~
