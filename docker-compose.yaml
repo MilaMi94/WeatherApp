@@ -15,7 +15,7 @@ services:
 
   backend:
     build: ./backend
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "python manage.py migrate && gunicorn weatherProject.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./backend:/app
     ports:
@@ -31,11 +31,15 @@ services:
       - DB_HOST=db
 
   frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     volumes:
-    - ./frontend:/app
+      - ./frontend:/app
+      - /app/node_modules # Prevent node_modules overwrite
+    ports:
+      - "3000:3000"
+    command: npm run dev
 
 volumes:
   postgres_data:
