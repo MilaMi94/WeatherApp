@@ -1,11 +1,18 @@
-import { useState } from "react";
-import api from "../api";
+import React, { useState } from "react";
+import {
+    Box,
+    TextField,
+    Button,
+    Typography,
+    IconButton,
+    InputAdornment,
+    Alert,
+    CircularProgress,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../const";
-import "../styles/Form.css";
-
-
-console.log('dsads');
 
 const validatePassword = (password) => {
     const errors = [];
@@ -37,6 +44,9 @@ const validateLoginFields = (username, password) => {
 };
 
 function Form({ route, method }) {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState([]);
     const [successMessage, setSuccessMessage] = useState("");
     const [loading, setLoading] = useState(false);
@@ -44,102 +54,159 @@ function Form({ route, method }) {
 
     const name = method === "login" ? "Login" : "Register";
 
-    const handleClick = async () => {
-        // Dohvati vrednosti input polja sa DOM-a
-        const usernameInput = document.querySelector('input[type="text"]');
-        const passwordInput = document.querySelector('input[type="password"]');
+    const isDisabled = !password.trim() || !username.trim();
 
-        const username = usernameInput ? usernameInput.value.trim() : "";
-        const password = passwordInput ? passwordInput.value : "";
-
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setErrors([]);
         setSuccessMessage("");
         setLoading(true);
 
-        // Validacija
+        let allErrors = [];
+
         if (method === "register") {
-            const usernameErrors = validateUsername(username);
-            const passwordErrors = validatePassword(password);
-            const allErrors = [...usernameErrors, ...passwordErrors];
-            if (allErrors.length > 0) {
-                setErrors(allErrors);
-                setLoading(false);
-                return;
-            }
+            allErrors = [...validateUsername(username), ...validatePassword(password)];
+        } else {
+            allErrors = validateLoginFields(username, password);
         }
 
-        if (method === "login") {
-            const loginErrors = validateLoginFields(username, password);
-            if (loginErrors.length > 0) {
-                setErrors(loginErrors);
-                setLoading(false);
-                return;
-            }
+        if (allErrors.length > 0) {
+            setErrors(allErrors);
+            setLoading(false);
+            return;
         }
 
-        // Poziv API-ja
         try {
             const res = await api.post(route, { username, password });
-            console.log('test')
+            console.log("API response:", res);
+
             if (method === "login") {
                 localStorage.setItem(ACCESS_TOKEN, res.data.access);
                 localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
                 navigate("/");
             } else {
                 setSuccessMessage("Registration successful! Redirecting to login...");
-                setLoading(false);
-                setTimeout(() => {
-                    navigate("/login");
-                }, 2000);
+                setTimeout(() => navigate("/login"), 2000);
             }
         } catch (error) {
-            setErrors(["An error occurred. Please try again."]);
-            console.error(error);
-            setLoading(false);
+            console.log("CATCH BLOCK HIT");
+            if (error.response && error.response.data) {
+                const data = error.response.data;
+                console.log("Error data from backend:", data);
+
+                if (typeof data === "string") {
+                    setErrors([data]);
+                    setLoading(false);
+                } else if (Array.isArray(data)) {
+                    setErrors(data);
+                    setLoading(false);
+                } else if (data.errors && Array.isArray(data.errors)) {
+                    setErrors(data.errors);
+                    setLoading(false);
+                } else if (data.error) {
+                    setErrors([data.error]);
+                    setLoading(false);
+                } else if (data.detail) {
+                    setErrors([data.detail]);
+                    setLoading(false);
+                } else {
+                    // Fallback
+                    const fallbackErrors = [];
+                    for (const key in data) {
+                        const value = data[key];
+                        if (Array.isArray(value)) {
+                            fallbackErrors.push(...value);
+                        } else if (typeof value === "string") {
+                            fallbackErrors.push(value);
+                        }
+                    }
+                    setErrors(fallbackErrors.length > 0 ? fallbackErrors : ["An error occurred."]);
+                    setLoading(false);
+                }
+            } else {
+                setErrors(["An error occurred."]);
+                setLoading(false);
+            }
         }
     };
 
     return (
-        <div className="form-container">
-            <h1>{name}</h1>
+        <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{
+                maxWidth: 400,
+                mx: "auto",
+                mt: 5,
+                p: 4,
+                boxShadow: 3,
+                borderRadius: 2,
+                backgroundColor: "#fff",
+            }}
+        >
+            <Typography variant="h4" align="center" gutterBottom color="#1976d2">
+                {name}
+            </Typography>
 
-            <input
-                className="form-input"
-                type="text"
-                placeholder="Username"
-                name="username"
-                autoComplete="username"
+            <TextField
+                fullWidth
+                label="Username"
+                variant="outlined"
+                margin="normal"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
             />
 
-            <input
-                className="form-input"
-                type="password"
-                placeholder="Password"
-                name="password"
-                autoComplete={method === "login" ? "current-password" : "new-password"}
+            <TextField
+                fullWidth
+                label="Password"
+                variant="outlined"
+                margin="normal"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <IconButton
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                edge="end"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                        </InputAdornment>
+                    ),
+                }}
             />
 
             {errors.length > 0 && (
-                <ul className="form-errors">
+                <Box mt={2}>
                     {errors.map((err, index) => (
-                        <li key={index}>{err}</li>
+                        <Alert key={index} severity="error" sx={{ mb: 1 }}>
+                            {err}
+                        </Alert>
                     ))}
-                </ul>
+                </Box>
             )}
 
-            {successMessage && <div className="success-popup">{successMessage}</div>}
+            {successMessage && (
+                <Alert severity="success" sx={{ mt: 2 }}>
+                    {successMessage}
+                </Alert>
+            )}
 
-            <button
-                className="form-button"
-                type="button"
-                onClick={() => {
-                    handleClick();
-                }}
-                disabled={loading}
+            <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                color="primary"
+                sx={{ mt: 3 }}
+                disabled={loading || isDisabled}
             >
-                {loading ? "Loading..." : name}
-            </button>
-        </div>
+                {loading ? <CircularProgress size={24} color="inherit" /> : name}
+            </Button>
+        </Box>
     );
 }
 
