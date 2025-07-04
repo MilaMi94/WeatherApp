@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Fade,
   Box,
   Typography,
   Grid,
@@ -43,11 +44,12 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e) => {
+  const handleSearch = async () => {
     if (city.trim()) {
       setError("");
       setWeather(null);
       setHasSearched(true);
+      setLoading(true); // Start loading
       try {
         const response = await api.post("/weather/", { city });
         const data = response.data;
@@ -55,6 +57,8 @@ export default function Home() {
         setLastForecast(data.main);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to fetch weather data. Try again.");
+      } finally {
+        setLoading(false); // End loading
       }
     }
   };
@@ -217,38 +221,51 @@ export default function Home() {
                 </Alert>
               )}
 
-              {weather && (
+
+              {loading ? (
                 <Card sx={{ mt: 3, backgroundColor: "rgba(255,255,255,0.05)" }}>
                   <CardContent>
-                    <Typography gutterBottom>
-                      <strong>Country:</strong> {weather.country_code}
-                    </Typography>
-                    <Typography gutterBottom>
-                      <strong>Coordinates:</strong> {weather.coordinate}
-                    </Typography>
-                    <Typography gutterBottom>
-                      <strong>Pressure:</strong> {weather.pressure}
-                    </Typography>
-                    <Typography gutterBottom>
-                      <strong>Humidity:</strong> {weather.humidity}
-                    </Typography>
-                    <Typography
-                      gutterBottom
-                      sx={{ display: "flex", alignItems: "center" }}
-                    >
-                      <strong>Forecast:</strong>&nbsp;
-                      {weather.main}
-                      <img
-                        src={`http://openweathermap.org/img/w/${weather.icon}.png`}
-                        alt="weather icon"
-                        style={{ width: 40, marginLeft: 10 }}
-                      />
-                    </Typography>
-                    <Typography gutterBottom>
-                      <strong>Description:</strong> {weather.description}
-                    </Typography>
+                    <Skeleton width="60%" height={30} sx={{ mb: 1 }} />
+                    <Skeleton width="80%" height={30} sx={{ mb: 1 }} />
+                    <Skeleton width="40%" height={30} sx={{ mb: 1 }} />
+                    <Skeleton width="70%" height={30} sx={{ mb: 1 }} />
+                    <Skeleton variant="rectangular" height={40} sx={{ mt: 2 }} />
                   </CardContent>
                 </Card>
+              ) : weather && (
+                <Fade in={!loading}>
+                  <Card sx={{ mt: 3, backgroundColor: "rgba(255,255,255,0.05)" }}>
+                    <CardContent>
+                      <Typography gutterBottom>
+                        <strong>Country:</strong> {weather.country_code}
+                      </Typography>
+                      <Typography gutterBottom>
+                        <strong>Coordinates:</strong> {weather.coordinate}
+                      </Typography>
+                      <Typography gutterBottom>
+                        <strong>Pressure:</strong> {weather.pressure}
+                      </Typography>
+                      <Typography gutterBottom>
+                        <strong>Humidity:</strong> {weather.humidity}
+                      </Typography>
+                      <Typography
+                        gutterBottom
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <strong>Forecast:</strong>&nbsp;
+                        {weather.main}
+                        <img
+                          src={`http://openweathermap.org/img/w/${weather.icon}.png`}
+                          alt="weather icon"
+                          style={{ width: 40, marginLeft: 10 }}
+                        />
+                      </Typography>
+                      <Typography gutterBottom>
+                        <strong>Description:</strong> {weather.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Fade>
               )}
             </Paper>
           </Grid>
